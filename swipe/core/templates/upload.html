@@ -11,78 +11,79 @@
 
 {% block content %}
 <section class="container-fluid section2" id="section2">
-  <h1 class="text-center" style="padding-top: 70px;padding-bottom: 70px;font-size: 50px;"><p><span class="glyphicon glyphicon-upload"></span>  Upload Files</p></h1>
+  <h1 class="text-center" style="padding-top: 50px;padding-bottom: 30px;font-size: 50px;"><p><span class="glyphicon glyphicon-upload"></span>  Upload Files</p></h1>
   <form id='#form-upload' class = 'form-horizontal' role="form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
-    <div class="col-sm-4 col-sm-offset-4">
+    <div class="col-md-8 col-md-offset-2">
       <div class = "form-group">
         <div class="file-loading">
             <input id="input-b7" name="input-b7[]" multiple type="file" class="file" data-allowed-file-extensions='["xlsx", "xls"]' required >
         </div>
       </div>
-      <div style="padding-top: 50px;"class="container">
-          <div class="row">
-              <div class='col-md-2'>
-                  <div class="form-group">
-                      <div class='input-group date' id='datetimepicker1'>
-                          <input type='text' name='from' class="form-control" placeholder="Enter 'From' Date......" required />
-                          <span class="input-group-addon">
-                              <span class="glyphicon glyphicon-calendar"></span>
-                          </span>
-                      </div>
-                  </div>
-              </div>
-              <span class="col-md-2 text-center center-block lyphicon glyphicon-minus"></span>
-              <div class='col-md-2'>
-                  <div class="form-group">
-                      <div class='input-group date' id='datetimepicker2'>
-                          <input type='text' name='to' class="form-control" placeholder="Enter 'To' Date......." required />
-                          <span class="input-group-addon">
-                              <span class="glyphicon glyphicon-calendar"></span>
-                          </span>
-                      </div>
-                  </div>
-              </div>
-              <div class='col-md-3'></div>
-              <script type="text/javascript">
-                  $(function () {
-                      $('#datetimepicker1').datetimepicker({format: 'YYYY-MM-DD'});
-                      $('#datetimepicker2').datetimepicker({format: 'YYYY-MM-DD'});
-                  });
-              </script>
-          </div>
-      </div>
-      <p class="text-center center-block" style="padding: 50px 0px 50px 0px;">
-        <button  id="upload" type="submit" class="btn btn-primary btn-lg ">Upload</button>
-        {% if save %}
-        <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert">x</button>
-          <strong>Success!</strong> The file has been uploaded.
+    </div>
+    <div style="padding-top: 50px;"class="container">
+        <div class="row">
+          <div class='col-md-3'></div>
+            <div class='col-md-2'>
+                <div class="form-group">
+                    <div class='input-group date' id='datetimepicker1'>
+                        <input type='text' name='from' class="form-control" placeholder="Enter 'From' Date......" required />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <span class="col-md-2 text-center center-block lyphicon glyphicon-minus"></span>
+            <div class='col-md-2'>
+                <div class="form-group">
+                    <div class='input-group date' id='datetimepicker2'>
+                        <input type='text' name='to' class="form-control" placeholder="Enter 'To' Date......." required />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class='col-md-3'></div>
+            <script type="text/javascript">
+                $(function () {
+                    $('#datetimepicker1').datetimepicker({format: 'YYYY-MM-DD'});
+                    $('#datetimepicker2').datetimepicker({format: 'YYYY-MM-DD'});
+                });
+            </script>
         </div>
-        <script>
-            var timer = setTimeout(function() {
-                window.location='/home/analyse'
-            }, 3000);
-        </script>
+    </div>
+    <p class="text-center center-block" style="padding: 50px 0px 50px 0px;">
+      <button  id="upload" type="submit" class="btn btn-primary btn-lg ">Upload</button>
+      {% if save %}
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">x</button>
+        <strong>Success!</strong> The file has been uploaded.
+      </div>
+      <script>
+          var timer = setTimeout(function() {
+              window.location='/home/analys'
+          }, 3000);
+      </script>
+      {% else %}
+        {% if alreadyExist %}
+          <div class="alert alert-danger">
+            <button type="button" class="close" data-dismiss="alert">x</button>
+            <strong>Failure!</strong> The file already exists!!
+          </div>
         {% else %}
-          {% if alreadyExist %}
+          {% if uploadFailed %}
             <div class="alert alert-danger">
               <button type="button" class="close" data-dismiss="alert">x</button>
-              <strong>Failure!</strong> The file already exists!!
+              <strong>Failure!</strong> File Upload failed!!
             </div>
-          {% else %}
-            {% if uploadFailed %}
-              <div class="alert alert-danger">
-                <button type="button" class="close" data-dismiss="alert">x</button>
-                <strong>Failure!</strong> File Upload failed!!
-              </div>
-            {% endif %}
           {% endif %}
         {% endif %}
+      {% endif %}
 
-      </p>
-    </div>
+    </p>
   </form>
 </section>
 {% endblock %}
