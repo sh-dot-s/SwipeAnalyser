@@ -1,0 +1,31 @@
+{% extends 'nav-base.html' %}
+{% load static %}
+{% load bootstrap3 %}
+{% load render_table from django_tables2 %}
+
+{% block headloader %}
+  <link href="{% static 'django_tables2/bootstrap.css' %}" rel="stylesheet" />
+  {% bootstrap_css %}
+{% endblock %}
+{% block content %}
+<section class="container-fluid">
+  <div class="row">
+      {% if filter %}
+          <div class="col-md-10 col-md-offset-2">
+              <form action="" method="get" class="form form-inline">
+                  {% bootstrap_form filter.form layout='inline' %}
+                  {% bootstrap_button 'filter' %}
+                  <a href="/home/filtered" class="form-inline btn btn-primary btn-md" role="button">Reset</a>
+                </div>
+              </form>
+          </div>
+      {% endif %}
+    </div>
+    <div class="row">
+      <div style="padding-top: 50px" class="col-md-8 col-xs-12 col-sm-12 col-lg-8 ">
+          {% render_table table %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
