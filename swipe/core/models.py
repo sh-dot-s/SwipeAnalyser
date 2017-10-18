@@ -14,3 +14,16 @@ class Document(models.Model):
 
     def get_absolute_url(self):
         return '/%d' % self.upload_url
+
+class Employee(models.Model):
+    employee_id = models.CharField(max_length=255, blank=True)
+    attendence_date = models.DateField(default=None,blank=True)
+    work_time = models.CharField(max_length=255, blank=True)
+    employee_name = models.CharField(max_length=255, blank=True)
+    employee_dept = models.CharField(max_length=255, blank=True)
+    tower = models.CharField(max_length=255, blank=True)
+
+# class EmployeeMeta(models.Model):
+#     jsonData = models.CharField(blank=True)
+#     employee_id = models.CharField(max_length=255, blank=True)
+#     attendence_date = models.DateField(default=None,blank=True)

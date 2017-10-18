@@ -1,0 +1,21 @@
+{% extends 'nav-base.html' %}
+{% load static %}
+{% load bootstrap3 %}
+{% load render_table from django_tables2 %}
+
+{% block headloader %}
+  <link href="{% static 'django_tables2/bootstrap.css' %}" rel="stylesheet" />
+  {% bootstrap_css %}
+{% endblock %}
+
+{% block content %}
+<section class="container-fluid">
+  {% render_table table %}
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <a href="/home/analys" class="btn btn-primary btn-md" role="button">Enable Filter</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
