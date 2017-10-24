@@ -4,9 +4,10 @@ from . import views
 urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^upload', views.upload, name='upload'),
-    url(r'^mail', views.mail, name='mail'),
+    url(r'^mail$', views.mail, name='mail'),
     url(r'^test', views.test, name='test'),
     url(r'^table', views.table, name='table'),
+    url(r'^mail_response/$', views.mail_response, name='mail_response'),
     url(r'^analys', views.FilteredDocument.as_view(), name='analys'),
 
 ]

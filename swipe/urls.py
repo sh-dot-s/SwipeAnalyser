@@ -21,7 +21,8 @@ from swipe.core import urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^home/', include(urls))
+    url(r'^home/', include(urls)),
+    url(r'$', include(urls))
 ]
 
 if settings.DEBUG:

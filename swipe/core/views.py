@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
-from swipe.core.models import Document, Employee
+from swipe.core.models import Document, Employee, Review
 from .tables import BootstrapTable, DocumentTable, EmployeeTable
 from django_tables2 import RequestConfig
 from django_filters.views import FilterView
@@ -11,6 +11,7 @@ from .corelogic import *
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from .mail import sendSMTPMail
+from django.http import HttpResponse
 
 def home(request):
     documents = Document.objects.all()
@@ -64,7 +65,7 @@ def test(request):
         for processFile in Document.objects.all():
         # processFile = Document.objects.all()[len(list(Document.objects.all()))-1]
             if not processFile.processed:
-                masterEmployee, dumpableDict = load_master_emp(processFile.file_title)
+                masterEmployee = load_master_emp(processFile.file_title)
                 shiftDict,employeeShift,irregularShifts = shift_emp_masters()
                 # print(shiftDict,employeeShift,irregularShifts)
                 masterList, d1, d2 = calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,processFile.file_title)
@@ -100,3 +101,12 @@ def mail(request):
         RequestConfig(request, paginate={'per_page': 10}).configure(table)
         sendSMTPMail(selected_objects)
     return render(request, 'selection.html',{'table': table})
+
+@csrf_exempt
+def mail_response(request):
+    if request.method == 'POST':
+        print(request.POST)
+        doc = Review(response = request.POST['clarify'], employee_id = '', attendence_date='')#, file_from=request.POST["from"], file_to=request.POST["to"]
+        doc.save()
+        return HttpResponse("<h4>Response recorded, Thank you for your time.</h4>")
+    return HttpResponse("<h3>Invalid Session</h3>")

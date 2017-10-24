@@ -112,7 +112,6 @@ def load_master_emp(datafile):
     gc.enable()
     now = time.time()
     i = 1
-    print(datafile)
     files = datafile
     files = [files for files in files if not str(files).startswith("~$")]
     masterEmployee = nested_dict.nested_dict()
@@ -122,6 +121,7 @@ def load_master_emp(datafile):
     sizeF = os.path.getsize(dataFilePath)
     try:
         prevSize = config.get("size",str(datafile))
+        print(prevSize,dataFilePath,datafile)
         if int(prevSize) != int(os.path.getsize(dataFilePath)):
             reprocess = True
             print("File changed.. Reprocesing...")
@@ -153,7 +153,7 @@ def load_master_emp(datafile):
             masterEmployee = json.load(jsonFile)
             masterEmployee =  nested_dict.nested_dict(masterEmployee)
     # print(masterEmployee)
-    return(masterEmployee, normaliseDict(masterEmployee))
+    return(masterEmployee)
 
 def shift_emp_masters():
     masterDir = os.path.join(settings.STATICFILES_DIRS[0],"masters")
@@ -314,6 +314,7 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
                                 if not tempOut == {}:
                                     permOut = tempOut
                             inFlag,outFlag = False, False
+                            del dateShiftedDict
                             if inVal == {}:
                                 inFlag= True
                             if ([outValue for outValue in outValue] == {}) or permOut == {}:
@@ -324,9 +325,6 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
                                 mess[date] = "SIOM"
                             else:
                                 mess[date] = timeDifference
-                                # print(empid,timeDifference,inVal,outVal)
-                                # code = ruleParser(timeDifference,actualshiftin,actualshiftout)
-                                # mess[date] += code
                         else:
                             mess[date] = "NS"
                 else:

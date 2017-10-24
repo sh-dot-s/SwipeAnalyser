@@ -16,11 +16,10 @@ def sendSMTPMail(selected_objects):
         stringToAdd, i = "", 1
         # html_content = html_content.render(params)
         for empids in selected_objects:
-            stringToAdd += '<tr>\n\t<th scope="row">{}</th>\n\t<td>{}</td>\n\t<td>{}</td>\n\t<td><input type="text" class="form-control" id="clarifyComments" placeholder="Remarks.."></td>\n</tr>\n'.format(i,empids.employee_name,empids.attendence_date)
+            stringToAdd += '<tr>\n\t<th scope="row">{}</th>\n\t<td>{}</td>\n\t<td>{}</td>\n\t<td>{}</td>\n\t<td><input type="text" class="form-control" name="clarify" placeholder="Remarks.."></td>\n</tr>\n'.format(i,empids.employee_name,empids.attendence_date,empids.work_time)
             i += 1
         # print((stringToAdd))
         html_content = html_content.replace("tablebody",stringToAdd)
-        print(html_content)
         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
         msg.attach_alternative(html_content, "text/html")
         msg.send()

@@ -27,3 +27,8 @@ class Employee(models.Model):
 #     jsonData = models.CharField(blank=True)
 #     employee_id = models.CharField(max_length=255, blank=True)
 #     attendence_date = models.DateField(default=None,blank=True)
+
+class Review(models.Model):
+    response = models.CharField(max_length=255, blank=True)
+    employee_id = models.CharField(max_length=255, blank=True)
+    attendence_date = models.DateField(default=None,blank=True)
