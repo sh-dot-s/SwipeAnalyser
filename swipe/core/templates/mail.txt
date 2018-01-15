@@ -1,0 +1,12 @@
+<tr>
+<th scope="row">{i}</th>
+<td>{id}</td>
+<td>{name}</td>
+<td>{date}</td>
+<td>{time}</td>
+<td><label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Fullday">Present Fullday</label>
+<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Halfday">Present Halfday</label>
+<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Leave">Leave</label>
+<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Work from Home">Work from Home</label>
+</td>
+</tr>

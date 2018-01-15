@@ -3,18 +3,45 @@
 {% load render_table from django_tables2 %}
 {% block content %}
 <section class="container-fluid section1" id="section1">
+  <script>
+      $(document).ready(function(){
+        $('[data-toggle="dtooltip"]').tooltip();
+        $('[data-toggle="detooltip"]').tooltip();
+        $('[data-toggle^="popover"]').popover({
+          container: 'body',
+          html: true
+        });  
+      });
+    </script>
   <h1 class="text-center v-center ">Stats  <span class="glyphicon glyphicon-stats"></span></h1>
   <div class="container" style="padding-top: 50px;">
     <div class="row">
       <div class="col-sm-6 col-xs-12">
         <div class="list-group text-center">
-          <div class="list-group-item active" style="">
+          <div class="list-group-item active">
             <h2 class="list-group-item-heading">Process Stats</h2>
           </div>
           {% for files in documents %}
-            <div class="list-group-item">
-              <p class="list-group-item-text">{{files.file_title}}</p>
-            </div>
+            <a href="#" 
+              class="list-group-item"
+              style="text-decoration: none"
+              data-trigger="focus"
+              data-placement = 'top'
+              href="#"
+              data-toggle="popover{{files.file_title}}" 
+              title="Details" 
+              data-content="
+                Upload Time: {{files.uploaded_at}}<br/>
+                Date Entries Start Date: {{files.file_from}}<br/>
+                Date Entries End Date: {{files.file_to}}<br/>
+                File Processed: {{files.processed}}<br/>
+                Records Present: {{files.records}}<br/>
+                "
+            >
+              <p class="list-group-item-text">
+                {{files.file_title}}
+              </p>
+            </a>
           {% endfor %}
         </div>
       </div>
@@ -24,14 +51,77 @@
                 <h2 class="list-group-item-heading">Uploaded Files</h2>
               </div>
               {% for files in documents %}
-                <a href="{{files.upload_url}}" class="list-group-item">
+                <a href="{{files.upload_url}}" class="list-group-item" data-toggle="dtooltip" data-placement="bottom" title="Click to download the file">
                   <p class="list-group-item-text">{{files.file_title}}</p>
                 </a>
               {% endfor %}
             </div>
-      </div><!--/middle-->
+      </div>
     </div>
   </div>
 </section>
-
+<section id="section2" class = "container-fluid">
+  <div class="container-fluid">
+  	<div class="row">
+  		<div class="col-md-2">
+  			<div class="btn-group">
+  				<button class="btn btn-default">Select File</button>
+  				<button data-toggle="dropdown" class="btn btn-default dropdown-toggle">
+  					<span class="caret"></span>
+  				</button>
+  				<ul class="dropdown-menu">
+            {% for items in documents %}
+  					<li><a role="button" class="btn" id="graph_{{items.file_title}}">{{items.file_title}}</a></li>
+            {% endfor %}
+  				</ul>
+  			</div>
+  		</div>
+  		<div class="col-md-10 chart-container" style="position: relative;" id = "chart_fillable">
+      </div>
+  	</div>
+  </div>
+  <script>
+  $('[id ^="graph_"]').click(function(){
+      jQuery.support.cors = true;
+      $.ajax(
+        {
+          type: "GET",
+          url: '/home/getDocDetails/'+this.id,
+          success: function(rdata){
+            var graphHTML = '<canvas id="dailyCount" height="20vh", width="50vw"></canvas>';
+            $("#chart_fillable").html(graphHTML);
+            var img = new Image();
+            img.src = 'http://papers.co/wallpaper/papers.co-an90-landscape-sunrise-mountain-nature-red-blue-40-wallpaper.jpg';
+            img.onload = function() {
+              var ctx = document.getElementById('dailyCount').getContext('2d');
+              var fillPattern = ctx.createPattern(img, 'repeat');
+              var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: rdata.labels,
+                  datasets:[{
+                    data: rdata.count,
+                    label: 'Count',
+                    backgroundColor: '#f44242',
+                    lineTension: 0,
+                    borderWidth: 2,
+                    borderColor: 'black',
+                  }],
+                  fillOpacity: .1,
+                },
+                options: {
+                  title: {
+                    display: true,
+                    text: 'Employees present in a day'
+                  }
+                }
+              });
+            }
+          }
+        }
+      );
+    }
+  );
+  </script>
+</section>
 {% endblock %}

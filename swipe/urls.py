@@ -17,12 +17,20 @@ from django.conf.urls.static import static
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.conf import settings
-from swipe.core import urls
+from swipe.core import urls as core_urls
+from swipe.core import views as core_views
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.generic.base import RedirectView
+
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^home/', include(urls)),
-    url(r'$', include(urls))
+    url(r'^home/', include(core_urls)),
+    url(r'^$', core_views.home),
+    url(r'^favicon.ico$',
+        RedirectView.as_view(
+            url=staticfiles_storage.url('favicon.ico')),name="favicon"
+    )
 ]
 
 if settings.DEBUG:

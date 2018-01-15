@@ -1,0 +1,329 @@
+$slip-n-slide: #ffc76f;
+$mrs-robinson: #fa2c7e;
+$smooth-fade: #54d2e0;
+$animation-duration: 1.8s;
+$normal-scale: 0.9;
+$squished-scale: 0.85;
+$stretched-scale: 0.95;
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.size-slider {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  width: 50%;
+  margin-left: -25%;
+}
+
+.glowworm-loader {
+  display: inline-block;
+  position: relative;
+  font-size: 100px;
+  line-height: 0;
+  width: 2.8em;
+  height: 1em;
+  text-align: center;
+}
+
+.glowworm-motion {
+  display: block;
+  position: absolute;
+  top: calc(50% - 0.5em);
+  left: calc(50% - 0.5em);
+  width: 1em;
+  height: 1em;
+  animation-name: glowworm-motion;
+  animation-timing-function: ease-in-out;
+  animation-delay: -0.5 * $animation-duration;
+  animation-iteration-count: infinite;
+  animation-duration: $animation-duration;
+}
+
+.glowworm-container {
+  display: block;
+  position: absolute;
+  top: calc(50% - 0.5em);
+  left: calc(50% - 0.5em);
+  width: 1em;
+  height: 1em;
+  transform: scale($normal-scale);
+  animation-name: glowworm-container;
+  animation-timing-function: ease-in-out;
+  color: $mrs-robinson;
+}
+
+.glowworm-left,
+.glowworm-right {
+  display: block;
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background-color: currentColor;
+}
+
+.glowworm-left {
+  right: 50%;
+  border-radius: 0.5em 0 0 0.5em;
+  transform-origin: 100% 50%;
+  animation-name: glowworm-left;
+  animation-timing-function: cubic-bezier(0.25, 0, 1, 0.75);
+}
+
+.glowworm-right {
+  left: 50%;
+  padding-left: 1px;
+  margin-left: -1px;
+  border-radius: 0 0.5em 0.5em 0;
+  transform-origin: 0 50%;
+  animation-name: glowworm-right;
+  animation-timing-function: cubic-bezier(0.25, 0.5, 0.75, 1);
+}
+
+.glowworm-left::after {
+  border-radius: 0.5em 0 0 0.5em;
+  animation-name: glowworm-left-overlay;
+  animation-timing-function: cubic-bezier(0.25, 0, 0.75, 1);
+}
+
+.glowworm-right::after {
+  border-radius: 0 0.5em 0.5em 0;
+  animation-name: glowworm-right-overlay;
+  animation-timing-function: cubic-bezier(0, 0.25, 1, 0.75);
+}
+
+.glowworm-left::after,
+.glowworm-right::after {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: '';
+}
+
+.glowworm-container,
+.glowworm-left,
+.glowworm-right,
+.glowworm-left::after,
+.glowworm-right::after {
+  animation-delay: -0.5 * $animation-duration;
+  animation-duration: $animation-duration;
+  animation-iteration-count: infinite;
+}
+
+.glowworm-loader {
+  &::before,
+  &::after {
+    display: block;
+    position: absolute;
+    top: 0;
+    width: 1em;
+    height: 1em;
+    border-radius: 0.5em;
+    content: '';
+    transform: scale($normal-scale);
+    animation-name: glowworm-reset;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-duration: $animation-duration;
+  }
+
+  &::before {
+    left: 0;
+    background-color: $slip-n-slide;
+    animation-delay: -(0.5 + 0.09) * $animation-duration;
+  }
+
+  &::after {
+    right: 0;
+    background-color: $smooth-fade;
+    animation-delay: -(0.5 - 0.09) * $animation-duration;
+    animation-direction: reverse;
+  }
+}
+
+@keyframes glowworm-motion {
+  0% {
+    transform: translateX(-0.9em) scale(0);
+  }
+
+  9%,
+  11% {
+    transform: translateX(-0.9em) scale(1);
+  }
+
+  48%,
+  51% {
+    transform: translateX(0) scale(1);
+  }
+
+  89%,
+  91% {
+    transform: translateX(0.9em) scale(1);
+  }
+
+  100% {
+    transform: translateX(0.9em) scale(0);
+  }
+}
+
+@keyframes glowworm-container {
+  0%,
+  9%,
+  11%,
+  51%,
+  91%,
+  100% {
+    transform: scale($normal-scale);
+  }
+
+  30%,
+  71% {
+    transform: scale($normal-scale, $squished-scale);
+  }
+
+  41%,
+  80% {
+    transform: scale($stretched-scale);
+  }
+
+  0%,
+  13% {
+    color: $slip-n-slide;
+  }
+
+  46%,
+  54% {
+    color: $mrs-robinson;
+  }
+
+  87%,
+  100% {
+    color: $smooth-fade;
+  }
+}
+
+@keyframes glowworm-left {
+  0%,
+  9%,
+  11%,
+  48%,
+  51%,
+  89%,
+  91%,
+  100% {
+    transform: scale(1);
+  }
+
+  29%,
+  70% {
+    transform: scale(1.6, 1);
+  }
+}
+
+@keyframes glowworm-right {
+  0%,
+  9%,
+  11%,
+  48%,
+  51%,
+  89%,
+  91%,
+  100% {
+    transform: scale(1);
+  }
+
+  29%,
+  70% {
+    transform: scale(1.8, 1);
+  }
+}
+
+@keyframes glowworm-left-overlay {
+  0%,
+  11%,
+  48%,
+  51%,
+  89%,
+  100% {
+    opacity: 0;
+  }
+
+  29%,
+  70% {
+    opacity: 1;
+  }
+
+  0%,
+  11%,
+  48% {
+    background-image: linear-gradient(to right, $slip-n-slide, rgba($slip-n-slide, 0));
+  }
+
+  51%,
+  89% {
+    background-image: linear-gradient(to right, $mrs-robinson, rgba($mrs-robinson, 0));
+  }
+
+  91%,
+  100% {
+    background-image: linear-gradient(to right, $smooth-fade, rgba($smooth-fade, 0));
+  }
+}
+
+@keyframes glowworm-right-overlay {
+  0%,
+  11%,
+  48%,
+  51%,
+  89%,
+  100% {
+    opacity: 0;
+  }
+
+  29%,
+  70% {
+    opacity: 1;
+  }
+
+  0% {
+    background-image: linear-gradient(to left, $slip-n-slide, rgba($slip-n-slide, 0));
+  }
+
+  11%,
+  48% {
+    background-image: linear-gradient(to left, $mrs-robinson, rgba($mrs-robinson, 0));
+  }
+
+  51%,
+  89%,
+  91%,
+  100% {
+    background-image: linear-gradient(to left, $smooth-fade, rgba($smooth-fade, 0));
+  }
+}
+
+@keyframes glowworm-reset {
+  0%,
+  18.0001%,
+  100% {
+    transform: scale(0);
+  }
+
+  18% {
+    transform: scale($normal-scale);
+  }
+}

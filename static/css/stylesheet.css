@@ -77,7 +77,7 @@ margin-top:25px;
 }
 
 footer.container-fluid.text-center.foot {
-    background: #FF9B4C;
+    background: #007399;
 }
 
 .white-txt{
@@ -99,4 +99,38 @@ background: #FFFFFF;
 
 .footimg{
 width: 20rem;
+}
+
+.imgblank {
+  display: block;
+  text-align: center;
+  margin: 0 auto;
+  height: 50px;
+  width: 50px;
+  -webkit-transition-property: -webkit-transform;
+  transition-property: -webkit-transform;
+  transition-property: transform;
+  transition-property: transform, -webkit-transform;
+  -webkit-transition-duration: 0.4s;
+          transition-duration: 0.4s;
+}
+.caption {
+  font-family: 'Sedgwick Ave Display', cursive;
+  color: #000;
+}
+
+.m-fadeOut {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s linear 2s, opacity 300ms;
+}
+.m-fadeIn {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0s linear 0s, opacity 2s;
+}
+
+.list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
+  z-index: 2;
+  color: #fff;
 }

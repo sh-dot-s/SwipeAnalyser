@@ -12,79 +12,83 @@
 {% block content %}
 <section class="container-fluid section2" id="section2">
   <h1 class="text-center" style="padding-top: 50px;padding-bottom: 30px;font-size: 50px;"><p><span class="glyphicon glyphicon-upload"></span>  Upload Files</p></h1>
-  <form id='#form-upload' class = 'form-horizontal' role="form" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-
-    <div class="col-md-8 col-md-offset-2">
-      <div class = "form-group">
-        <div class="file-loading">
-            <input id="input-b7" name="input-b7[]" type="file" class="file" data-allowed-file-extensions='["xlsx", "xls"]' required >
+  <div class="row">
+      <form id='#form-upload' method="post" class = 'form-horizontal' enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="col-md-8 col-md-offset-2">
+          <div class = "form-group">
+            <div class="file-loading">
+                <input id="input-b7" name="input-b7[]" type="file"  multiple required>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4 col-md-offset-4">
+          <p class="text-center center-block" style="padding: 50px 0px 50px 0px;">
+            <!-- <button  id="upload" type="submit" class="btn btn-primary btn-lg ">Upload</button> -->
+            <a  role='btn' href="/home/test" class="btn btn-default btn-lg ">Start Analysis</a>
+          </p>
+        </div>
+      </form>
+  </div>
+  <div class="row">
+    <div class="container-fluid">
+      <style>
+          .modal-body {
+            min-height: 85%;
+          }
+      </style>
+      <button type="button" class="btn btn-warning disabled btn-lg" data-toggle="modal" data-target="#updateMaster">Change Employee Master</button>
+    
+      <div id="updateMaster" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Upload the Master</h4>
+            </div>
+            <div class="modal-body">
+              <div class="container-fluid">
+                  <form id='#master-upload' method="post" class = 'form-horizontal' enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="col-md-8 col-md-offset-2">
+                      <div class = "form-group">
+                        <div class="file-loading">
+                            <input id="input-b6" name="input-b6[]" type="file" required>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <!-- <div style="padding-top: 50px;"class="container">
-        <div class="row">
-          <div class='col-md-3'></div>
-            <div class='col-md-2'>
-                <div class="form-group">
-                    <div class='input-group date' id='datetimepicker1'>
-                        <input type='text' name='from' class="form-control" placeholder="Enter 'From' Date......" required />
-                        <span class="input-group-addon">
-                            <span class="glyphicon glyphicon-calendar"></span>
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <span class="col-md-2 text-center center-block lyphicon glyphicon-minus"></span>
-            <div class='col-md-2'>
-                <div class="form-group">
-                    <div class='input-group date' id='datetimepicker2'>
-                        <input type='text' name='to' class="form-control" placeholder="Enter 'To' Date......." required />
-                        <span class="input-group-addon">
-                            <span class="glyphicon glyphicon-calendar"></span>
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class='col-md-3'></div>
-            <script type="text/javascript">
-                $(function () {
-                    $('#datetimepicker1').datetimepicker({format: 'YYYY-MM-DD'});
-                    $('#datetimepicker2').datetimepicker({format: 'YYYY-MM-DD'});
-                });
-            </script>
-        </div>
-    </div> -->
-    <div class="col-md-4 col-md-offset-4">
-      <p class="text-center center-block" style="padding: 50px 0px 50px 0px;">
-        <button  id="upload" type="submit" class="btn btn-primary btn-lg ">Upload</button>
-        {% if save %}
-        <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert">x</button>
-          <strong>Success!</strong> The file has been uploaded.
-        </div>
-        <script>
-            var timer = setTimeout(function() {
-                window.location='/home/test'
-            }, 1500);
-        </script>
-        {% else %}
-          {% if alreadyExist %}
-            <div class="alert alert-danger">
-              <button type="button" class="close" data-dismiss="alert">x</button>
-              <strong>Failure!</strong> The file already exists!!
-            </div>
-          {% else %}
-            {% if uploadFailed %}
-              <div class="alert alert-danger">
-                <button type="button" class="close" data-dismiss="alert">x</button>
-                <strong>Failure!</strong> File Upload failed!!
-              </div>
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      </p>
   </div>
-  </form>
+  <script>
+      $(document).ready(function(){
+        $('#input-b7').fileinput({
+          uploadUrl: '/home/upload',
+          overwriteInitial: false,
+          'allowedFileExtensions': ['xls','xlsx']
+        });
+        $('#master-upload').submit(function(e){
+          e.preventDefault();
+        });
+        $('#input-b6').fileinput({
+          uploadUrl: '/home/uploadMaster',
+          overwriteInitial: false,
+          'allowedFileExtensions': ['xls','xlsx']
+        });
+      });
+      // $('#form-upload').ajaxSubmit(function(e){
+
+      // });
+    </script>
 </section>
+
 {% endblock %}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+	<script src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
+	<link rel="stylesheet" href="./node_modules/animate.css/animate.css">
+	<script src="./node_modules/jquery/dist/jquery.js"></script>
+	<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
+	<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap-theme.css">
+	<script src="./node_modules/bootstrap/dist/js/bootstrap.js"></script>
+	<style>
+		.banner {
+			height: 100vh;
+			color: #CCC;
+			position: relative;
+		}
+
+		.banner h1 {
+			position: absolute;
+			color: #676767;
+			width: 100%;
+			top: 30%;
+		}
+
+		.banner h5 {
+			position: absolute;
+			color: #CCC;
+			width: 100%;
+			top: 35%;
+		}
+
+		.circle-container {
+			padding: 50px;
+		}
+
+		.circle {
+			padding: 25px;
+			height: 50px; width: 50px;
+			margin: 0 auto;
+			background-color: lightblue;
+			border-radius: 50px;
+		}
+	</style>
+
+</head>
+
+<body>
+	<nav class="navbar navbar-default">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">Animate-JS</a>
+			</div>
+			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="#">Home</a></li>
+					<li><a href="#">About</a></li>
+					<li><a href="#">Contact</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="banner">
+		<div class="container animation-group text-center" data-animation-interval="1000" data-animation-condition="seen">
+			<h1 data-animation="fadeInUp">Animate-JS!</h1>
+			<h5 data-animation="fadeInUp">Meh Animation Triggers...</h5>
+			<p data-animation-delay="5000" data-animation="rollIn, bounce, pulse infinite" data-animation-timeouts="0, 2000">Tast 2</p>
+			<p class="" data-animation="rollIn, bounce, rollOut" data-animation-infinite data-animation-timeouts="1000, 1000">Tast</p>
+		</div>
+	</div>
+
+    <div class="container">
+        <div class="text-center animation-group" data-animation-interval="500" data-animation-condition="seen">
+			<h2>Animations on seen</h2>
+			<p>These animations trigger when the middle of the container is visible</p>
+            <div class="circle-container col-xs-6">
+                <div href="#" class="circle" data-animation="fadeInRight">1</div>
+            </div>
+			<div class="circle-container col-xs-6">
+                <div href="#" class="circle" data-animation="fadeInRight">2</div>
+            </div>
+			<div class="circle-container col-xs-6">
+                <div href="#" class="circle" data-animation="fadeInRight">3</div>
+            </div>
+			<div class="circle-container col-xs-6">
+                <div href="#" class="circle" data-animation="fadeInRight">4</div>
+            </div>
+        </div>
+	</div>
+
+	<div class="container">
+        <div data-animation-interval="500" data-animation-condition="seen">
+			<h2>Animating in Intervals</h2>
+			<p>These animations play in intervals of half a second. </p>
+            <p data-animation="fadeInRightBig">fade</p>
+			<p data-animation="fadeInRightBig">in</p>
+			<p data-animation="fadeInRightBig">from</p>
+			<p data-animation="fadeInRightBig">right</p>
+        </div>
+	</div>
+
+	<script src="./dist/animate-js.js"></script>
+</body>
+
+</html>

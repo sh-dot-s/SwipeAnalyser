@@ -14,8 +14,9 @@
           <div class="col-md-12 center-block">
               <form action="" method="get" class="form form-inline ">
                   {% bootstrap_form filter.form layout='inline' show_label=False %}
-                  {% bootstrap_button 'filter' %}
-                  <a href="/home/analys" class="form-inline btn btn-primary btn-md" role="button">Reset</a>
+                  <br/><br/>
+                  <p align="center">{% bootstrap_button 'Filter' extra_classes='btn-warning'%}
+                  <a href="/home/analys" class="form-inline btn btn-danger btn-md" role="button">Reset</a></p>
                 </div>
               </form>
           </div>
@@ -23,12 +24,117 @@
     </div>
     <div class="row">
       <form action="/home/mail" role="form" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
         <div style="padding-top: 50px" class="col-md-12 col-xs-12 col-sm-12 col-lg-12 ">
             {% render_table table %}
             <input class="btn btn-primary center-block" type="submit" name="submit-email" value="Email">
         </div>
       </form>
+    </div>
+  </div>
+  <script>
+  $(document).ready(function(){
+    $('[class ^="attendence_date"]').append("<a id = 'tooltip-inside'></a>");
+    $('[id ^="tooltip-inside"]').attr("data-toggle","tooltip");
+    $('[id ^="tooltip-inside"]').attr("data-placement","right");
+    // $('[id ^="tooltip-inside"]').tooltip();
+    // $('[data-toggle="tooltip"]').
+  });
+  $('[class ^="attendence_date"]').mouseenter(function(){
+    var valueOfTd = $(this).text();
+    var d = new Date(valueOfTd);
+    var weekday = new Array(7);
+    weekday[0] =  "Sunday";
+    weekday[1] = "Monday";
+    weekday[2] = "Tuesday";
+    weekday[3] = "Wednesday";
+    weekday[4] = "Thursday";
+    weekday[5] = "Friday";
+    weekday[6] = "Saturday";
+    var n = weekday[d.getDay()];
+    // $(this).attr("data-toggle","tooltip");
+    $(this).find('#tooltip-inside').attr("title",n);
+    $(this).find('#tooltip-inside').tooltip("show");
+    $(this).mouseleave(function(){
+      $(this).find('#tooltip-inside').tooltip("hide");
+    })
+  });
+
+  $('[id ^="modalBtn"]').click(function(){
+  // alert(this.value);
+  // console.log("hasdas");
+  var service = '/home/getEmpDetails/';
+      jQuery.support.cors = true;
+      $.ajax(
+      {
+          type: "GET",
+          url: service+this.value,
+          data: "{}",
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+          cache: false,
+          success: function (data) {
+          var trHTML = '';
+          $.each(data, function (i, item) {
+              //console.log(data[i].fields)
+              trHTML += '<tr>';
+              for(var key in data[i].fields){
+                //console.log(key + ' - ' + data[i].fields[key]);
+                trHTML += '<td>' + data[i].fields[key] + '</td>';
+              }
+              trHTML += '</tr>';
+          });
+          $('#tableRow').html(trHTML);
+          },
+          error: function (msg) {
+              console.log(msg.responseText);
+          }
+      });
+  })
+
+  </script>
+  <style>
+  @media (min-width: 768px) {
+      .modal-xl {
+        width: 95%;
+       max-width:1300px;
+      }
+    }
+  </style>
+  <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-xl modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Swipe Details</h4>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Site Code</th>
+                  <th>Card ID</th>
+                  <th>Emp ID</th>
+                  <th>Emp Name</th>
+                  <th>Dept</th>
+                  <th>Type</th>
+                  <th>CID</th>
+                  <th>Gate</th>
+                  <th>In/Out</th>
+                  <th>Remark</th>
+                </tr>
+              </thead>
+              <tbody id="tableRow">
+              </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 </section>

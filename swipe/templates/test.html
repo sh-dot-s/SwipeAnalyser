@@ -437,85 +437,57 @@ footer .nav>li>a:hover {
 
 {% block headloader %}
 <style>
-/* Center the loader */
-#loader {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 1;
-  width: 150px;
-  height: 150px;
-  margin: -75px 0 0 -75px;
-  border: 16px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 16px solid #3498db;
-  width: 120px;
-  height: 120px;
-  -webkit-animation: spin 2s linear infinite;
-  animation: spin 2s linear infinite;
+.ml12 {
+  font-weight: 200;
+  font-size: 1.2em;
+  /*text-transform: uppercase;*/
+  letter-spacing: 0.3em;
 }
 
-@-webkit-keyframes spin {
-  0% { -webkit-transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Add animation to "page content" */
-.animate-bottom {
-  position: relative;
-  -webkit-animation-name: animatebottom;
-  -webkit-animation-duration: 1s;
-  animation-name: animatebottom;
-  animation-duration: 1s
-}
-
-@-webkit-keyframes animatebottom {
-  from { bottom:-100px; opacity:0 }
-  to { bottom:0px; opacity:1 }
-}
-
-@keyframes animatebottom {
-  from{ bottom:-100px; opacity:0 }
-  to{ bottom:0; opacity:1 }
-}
-
-#myDiv {
-  display: none;
-  text-align: center;
+.ml12 .letter {
+  display: inline-block;
+  line-height: 0.8em;
 }
 </style>
 <script>
-$(document).ready(function() {
-        $('#upload').click(function(){
-            $.ajax({
-                type: 'post',
-                url: '/home/test',
-                beforeSend: function () {
-                  $('#section2').html($('<div onload="showPage()" id="loader"></div>'))
-                },
-                success: function(result) {
-                  $('#section2').html('Analysis Complete...');
-                },
-                error: function(error) {
-                  $('#section2').html('Failed ...');
-                }
-            });
-        });
-    });
-    function showPage() {
-      document.getElementById("loader").style.display = "block";
-    }
+  $(document).ready(function() {
+    $('#upload').click(function(){
+        $.ajax(
+          {
+            type: 'post',
+            url: '/home/test',
+            success: function(result) {
+              $('#section2').html('Analysis queued...');
+              (function worker() {
+                $.get('/home/test', function(data) {
+                  console.log(data);
+                  // Now that we've completed the request schedule the next one.
+                  if(data.status == 'started' || data.status == 'running'){
+                    console.log(data);
+                    setTimeout(worker, 25000);
+                  }
+                  else{
+                    $('#section2').html('Analysis complete...');
+                    return;
+                  }
+                });
+              })();
+            },
+            error: function(error) {
+              console.log(error);
+              $('#section2').html('Failed ... :<');
+            }
+          }
+        );
+      }
+    );
+  });
 </script>
 {% endblock %}
 
 {% block content %}
 <div id="load"></div>
 <section class="container-fluid section2" id="section2">
-  <button  id="upload" type="button" class="btn btn-primary btn-lg ">Start Analysis</button>
+  <div class="well text-center" type="hidden"><button  id="upload" type="button" class="btn btn-primary btn-lg ">Start Analysis</button><h1 class="ml12 text-center" id="did_you_know"></h1></div>
 </section>
 {% endblock %}

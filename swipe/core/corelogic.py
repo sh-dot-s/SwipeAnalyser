@@ -14,6 +14,8 @@ dateRangeDict = nested_dict.nested_dict()
 config = configparser.ConfigParser()
 configPath = os.path.join(settings.BASE_DIR,"config.ini")
 config.read(configPath)
+gracetimein = datetime.timedelta(hours=int(config.get("other","gracetimein")))
+gracetimeout = datetime.timedelta(hours=int(config.get("other","gracetimeout")))
 
 def normaliseDict(items):
     for keys,values in items.items():
@@ -46,7 +48,22 @@ def merge(a, b, path=None):
             a[key] = b[key]
     return a
 
+def dateTimeConv(obj):
+    return(datetime.datetime.strptime(obj, "%Y-%m-%dT%H:%M:%S"))
+
+def dateConv(obj):
+    return(datetime.datetime.strptime(obj, "%Y-%m-%d"))
+
+def timeConv(obj):
+    # print(datetime.datetime.strptime(obj, "%H:%M:%S").time())
+    return(datetime.datetime.strptime(obj, "%H:%M:%S").time())
+
+def nextDate(obj):
+    return(str((datetime.datetime.strptime(obj, "%Y-%m-%d")+datetime.timedelta(days=1)).date()))
+
 def parseExcel(excelsheet, primaryEntryPoints):
+    global dateRangeDict
+    dateRangeDict = nested_dict.nested_dict()
     entryList =nested_dict.nested_dict()
     gateList = nested_dict.nested_dict()
     employee = nested_dict.nested_dict()
@@ -67,9 +84,15 @@ def parseExcel(excelsheet, primaryEntryPoints):
             dateEmp, timeEmp, empid, gate, inout =cell[0].value,cell[1].value,str((cell[4].value)),str(cell[9].value).lower(),str(cell[10].value).lower()
 
             try:
-                formattedDate = datetime.datetime.strptime(dateEmp, "%d/%m/%Y").date()
+                if isinstance(dateEmp, datetime.datetime):
+                    formattedDate = dateEmp.date()
+                else:
+                    formattedDate = datetime.datetime.strptime(dateEmp, "%d/%m/%Y").date()
             except:
-                formattedDate = datetime.datetime.strptime(dateEmp, "%d-%m-%Y").date()
+                if isinstance(dateEmp, datetime.datetime):
+                    formattedDate = dateEmp.date()
+                else:
+                    formattedDate = datetime.datetime.strptime(dateEmp, "%d-%m-%Y").date()
             if dateRangeDict[formattedDate] == {}:
                 dateRangeDict[formattedDate] = formattedDate
             else:
@@ -105,10 +128,10 @@ def parseExcel(excelsheet, primaryEntryPoints):
                         employee[empid][str(cellDateTime.date())][gate][logEntry][inout] = (cellDateTime)
                         del entryList[gate][logEntry]
 
-    return(employee)
+    return(employee, cells)
 
 def load_master_emp(datafile):
-    global config
+    global config, dateRangeDict
     gc.enable()
     now = time.time()
     i = 1
@@ -122,11 +145,11 @@ def load_master_emp(datafile):
     try:
         prevSize = config.get("size",str(datafile))
         print(prevSize,dataFilePath,datafile)
-        if int(prevSize) != int(os.path.getsize(dataFilePath)):
-            reprocess = True
-            print("File changed.. Reprocesing...")
-            config.set('size', str(datafile), str(sizeF))
-            config.write(open(configPath,"w"))
+        # if int(prevSize) == int(os.path.getsize(dataFilePath)):
+        reprocess = True
+        print("File changed.. Reprocesing...")
+        config.set('size', str(datafile), str(sizeF))
+        config.write(open(configPath,"w"))
     except Exception as e:
         print(e,"\nNo config item found, creating new item...")
         config.set('size', str(datafile), str(sizeF))
@@ -135,25 +158,36 @@ def load_master_emp(datafile):
 
     if reprocess:
         if not str(datafile).startswith("~$"):
-            empDictTemp = parseExcel(dataFilePath, primaryEntryPoints)
+            empDictTemp, cells = parseExcel(dataFilePath, primaryEntryPoints)
             merge(masterEmployee,empDictTemp)
             del empDictTemp
     gc.collect()
+    try:
+        d1, d2 = config.get("other","fromdate{}".format(datafile)),config.get("other","todate{}".format(datafile))
+        d1 = datetime.datetime.strptime(d1, "%Y-%m-%d").date()
+        d2 = datetime.datetime.strptime(d2, "%Y-%m-%d").date()
+
+    except:
+        dateRangeDict = [k for k in sorted(list(dateRangeDict))]
+        d1, d2 = dateRangeDict[0], dateRangeDict[len(dateRangeDict)-1]
+        config.set("other","fromdate{}".format(datafile),str(d1))
+        config.set("other","todate{}".format(datafile),str(d2))
+        config.write(open("config.ini","w"))
+
     dumpableDict = normaliseDict(masterEmployee)
-    if not os.path.exists("./masterEmployee.json"):
+    if not os.path.exists("./masterEmployee{}_{}.json".format(d1,d2)):
         print("Json file missing, reprocessing the data..")
         reprocess = True
 
     if reprocess:
-        with open("masterEmployee.json","w") as jsonFile:
+        with open("masterEmployee{}_{}.json".format(d1,d2),"w") as jsonFile:
             (json.dump(dumpableDict,jsonFile,indent=3))
     else:
         print("No file Change detected, loading data from json")
-        with open("masterEmployee.json","r") as jsonFile:
-            masterEmployee = json.load(jsonFile)
+        with open("masterEmployee{}_{}.json".format(d1,d2),"r") as jsonFile:
+            masterEmployee =json.load(jsonFile)
             masterEmployee =  nested_dict.nested_dict(masterEmployee)
-    # print(masterEmployee)
-    return(masterEmployee)
+    return(masterEmployee, cells)
 
 def shift_emp_masters():
     masterDir = os.path.join(settings.STATICFILES_DIRS[0],"masters")
@@ -188,13 +222,14 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
     finalReport = openpyxl.Workbook()
     finalSheet = finalReport.active
     finalSheet.title = 'Master'
+    # print(dateRangeDict)
     if dateRangeDict == {}:
         d1, d2 = config.get("other","fromdate{}".format(fileName)),config.get("other","todate{}".format(fileName))
         d1 = datetime.datetime.strptime(d1, "%Y-%m-%d").date()
         d2 = datetime.datetime.strptime(d2, "%Y-%m-%d").date()
 
     else:
-        dateRangeDict = [k for k in sorted(list(dateRangeDict.keys()))]
+        dateRangeDict = [k for k in sorted(list(dateRangeDict))]
     # d1 = datetime.date(int(fromDate[0][0]), int(fromDate[0][1]), int(fromDate[0][2]))  # start date
     # d2 = datetime.date(int(fromDate[1][0]), int(fromDate[1][1]), int(fromDate[1][2]))  # end date
         d1, d2 = dateRangeDict[0], dateRangeDict[len(dateRangeDict)-1]
@@ -213,131 +248,108 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
     finalSheet.append(datesRange)
     # masterList.append(datesRange)
 
-    for empid,dates in masterEmployee.items():
-        mess = {}
-        # mess[empid] = empid
+    inoutDict = nested_dict.nested_dict()
+    for keys, values in (masterEmployee.items_flat()):
+        shiftCode = employeeShift[keys[0]][len(employeeShift[keys[0]])-1]
+        if keys[4] == "in":
+            if inoutDict[keys[0]][keys[1]]["firstin"] == {}:
+                inoutDict[keys[0]][keys[1]]["firstin"] = values
+            elif dateTimeConv(inoutDict[keys[0]][keys[1]]["firstin"]) >  dateTimeConv(values):
+                inoutDict[keys[0]][keys[1]]["firstin"] = values
+            if inoutDict[keys[0]][keys[1]]["lastin"] == {}:
+                inoutDict[keys[0]][keys[1]]["lastin"] = values
+            elif dateTimeConv(inoutDict[keys[0]][keys[1]]["lastin"]) < dateTimeConv(values):
+                inoutDict[keys[0]][keys[1]]["lastin"] = values
+
+
+        if keys[4] == "out":
+            if inoutDict[keys[0]][keys[1]]["firstout"] == {}:
+                inoutDict[keys[0]][keys[1]]["firstout"] = values
+            elif dateTimeConv(inoutDict[keys[0]][keys[1]]["firstout"]) >  dateTimeConv(values):
+                inoutDict[keys[0]][keys[1]]["firstout"] = values
+            if inoutDict[keys[0]][keys[1]]["lastout"] == {}:
+                inoutDict[keys[0]][keys[1]]["lastout"] = values
+            elif dateTimeConv(inoutDict[keys[0]][keys[1]]["lastout"]) < dateTimeConv(values):
+                inoutDict[keys[0]][keys[1]]["lastout"] = values
+
+    for empid in masterEmployee.keys():
         shiftCode = employeeShift[empid][len(employeeShift[empid])-1]
-        for dateR in datesRange:
-            if dateR not in list(masterEmployee[empid].keys()) and dateR != "Emp ID":
-                mess[dateR] = "NS"
-        for date,gates in (dates.items()):
-            formatteddate = datetime.datetime.strptime(date, "%Y-%m-%d")
-            permOut = {}
-            if shiftCode not in irregularShifts:
-                inFlag,outFlag = False, False
-                topGate = list(gates.keys())[0]
-                bottomGate = list(gates.keys())[len(gates.keys())-1]
-                topEntry = list(list(gates.values())[0].keys())[0]
-                bottomEntry = list(list(gates.values())[0].keys())[len(list(gates.values())[0].keys())-1]
-                inVal = masterEmployee[empid][date][topGate][topEntry]['in']
-                if shiftCode == "C" and inVal != {} :
-                # print(empid)
-                    actualshiftin = [datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][0], "%H:%M:%S").time() for i in range(len(list(shiftDict[shiftCode].keys())))]
-                    if any(datetime.datetime.strptime(inVal, "%Y-%m-%dT%H:%M:%S").time() < ain for ain in actualshiftin):
-                        i= 0
-                        while True:
-                            i += 1
-                            if  i > len(gates.keys())-1:
-                                break
-                            # print(gates.keys(),list(gates.values())[i])
-                            topGate = list(gates.keys())[i]
-                            topEntry = list(list(gates.values())[i].keys())[0]
-                            inVal = masterEmployee[empid][date][topGate][topEntry]['in']
-                            if inVal != {} and not any(datetime.datetime.strptime(inVal, "%Y-%m-%dT%H:%M:%S").time() < ain for ain in actualshiftin):
-                                break
-                outVal = []
-                for gates in masterEmployee[empid][date].keys():
-                    # print(masterEmployee[empid][date][gates].keys())
-                    # for i in range(len(masterEmployee[empid][date][gates].keys())-1):
-                    bottomEntry = list(masterEmployee[empid][date][gates].keys())[len(masterEmployee[empid][date][gates].keys())-1]
-                    tempOut = masterEmployee[empid][date][gates][bottomEntry]['out']
-                    outVal.append(masterEmployee[empid][date][gates][bottomEntry]['out'])
-                    if not tempOut == {} :
-                        if permOut == {}:
-                            permOut = tempOut
-                        if permOut != {} :
-                            if datetime.datetime.strptime(tempOut, "%Y-%m-%dT%H:%M:%S") > datetime.datetime.strptime(permOut, "%Y-%m-%dT%H:%M:%S"):
-                            # print(tempOut)
-                                permOut = tempOut
-                # outVal = masterEmployee[empid][date][bottomGate][bottomEntry]['out']
-                if inVal == {}:
-                    inFlag= True
-                if ([outVal for outVal in outVal] == {}) or permOut == {}:
-                    outFlag = True
-                if not inFlag and not outFlag:
-                    timeDifference = abs(datetime.datetime.strptime(permOut, "%Y-%m-%dT%H:%M:%S")-datetime.datetime.strptime(inVal, "%Y-%m-%dT%H:%M:%S"))
-                if  inFlag or outFlag:
-                    mess[date] = "SIOM"
-                else:
-                    mess[date] = timeDifference
-                    # code = ruleParser(timeDifference,None,None)
-                    # mess[date] += code
-                    # if empid == "350055":
-                    # print(empid,type(empid),timeDifference,topGate,bottomGate)
-            else:
-                nextDate = findNextKey(masterEmployee,empid,date)
-                if nextDate != None:
-                    dateCond = (datetime.datetime.strptime(nextDate, "%Y-%m-%d") - datetime.timedelta(days=1))
-                    if date != str(dateCond.date()):
-                        mess[date] = "SIOM"
-                    else:
-                        mergedTemp = merge(masterEmployee[empid][date],masterEmployee[empid][nextDate])
-                        # print("Created temp dict")
-                        dateShiftedDict = nested_dict.nested_dict()
-                        updated = False
-                        outValue,permOut = [], {}
-                        actualshiftin = [datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][0], "%H:%M:%S").time() for i in range(len(list(shiftDict[shiftCode].keys())))]
-                        actualshiftout = [datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][1], "%H:%M:%S").time() for i in range(len(list(shiftDict[shiftCode].keys())))]
-                        inFlag,outFlag = False, False
-                        for gate in mergedTemp.keys():
-                            for entries in mergedTemp[gate].keys():
-                                if mergedTemp[gate][entries]["in"] == {} and mergedTemp[gate][entries]["out"] == {}:
-                                    pass
-                                else:
-                                    if mergedTemp[gate][entries]["in"] != {}:
-                                        inVal = datetime.datetime.strptime(mergedTemp[gate][entries]["in"], "%Y-%m-%dT%H:%M:%S")
-                                        if any(inVal.time() > ain for ain in actualshiftin) and inVal.date() == formatteddate.date():
-                                            updated = True
-                                            dateShiftedDict[gate][entries] = mergedTemp[gate][entries]
-                                    if mergedTemp[gate][entries]["out"] != {}:
-                                        outVal = datetime.datetime.strptime(mergedTemp[gate][entries]["out"], "%Y-%m-%dT%H:%M:%S")
-                                        if any(outVal.time() < aout for aout in actualshiftout) and outVal.date() > formatteddate.date() :
-                                            updated = True
-                                            dateShiftedDict[gate][entries] = mergedTemp[gate][entries]
-                        del mergedTemp
-                        if updated:
-                            inVal = dateShiftedDict[list(dateShiftedDict.keys())[0]][list(list(dateShiftedDict.values())[0].keys())[0]]["in"]
-                            for gates in dateShiftedDict.keys():
-                                bottomEntry = list(dateShiftedDict[gates].keys())[len(dateShiftedDict[gates].keys())-1]
-                                tempOut = dateShiftedDict[gates][bottomEntry]['out']
-                                outValue.append(dateShiftedDict[gates][bottomEntry]['out'])
-                                if not tempOut == {}:
-                                    permOut = tempOut
-                            inFlag,outFlag = False, False
-                            del dateShiftedDict
-                            if inVal == {}:
-                                inFlag= True
-                            if ([outValue for outValue in outValue] == {}) or permOut == {}:
-                                outFlag = True
-                            if not inFlag and not outFlag:
-                                timeDifference = abs(datetime.datetime.strptime(permOut, "%Y-%m-%dT%H:%M:%S")-datetime.datetime.strptime(inVal, "%Y-%m-%dT%H:%M:%S"))
-                            if  inFlag or outFlag:
-                                mess[date] = "SIOM"
-                            else:
-                                mess[date] = timeDifference
+        if shiftCode in ['C','D','E']:
+            actualshiftin = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][0], "%H:%M:%S")-gracetimein).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
+            actualshiftout = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][1], "%H:%M:%S")).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
+            actualshiftoutgrace = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][1], "%H:%M:%S")+gracetimeout).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
+            for keys,values in masterEmployee[empid].items_flat():
+                # if empid == "350040":
+                #     print("INFO:",keys,values)
+                if any(dateTimeConv(values).time() > ain for ain in actualshiftin):
+                    if inoutDict[empid][keys[0]]["shiftin"] == {}:
+                        inoutDict[empid][keys[0]]["shiftin"] = values
+                    elif dateTimeConv(inoutDict[empid][keys[0]]["shiftin"]) > dateTimeConv(values):
+                        inoutDict[empid][keys[0]]["shiftin"] = values
+                if any(dateTimeConv(values).time() < aout for aout in actualshiftout) or any(dateTimeConv(values).time() < aout for aout in actualshiftoutgrace):
+                    if inoutDict[empid][keys[0]]["shiftout"] == {}:
+                        inoutDict[empid][keys[0]]["shiftout"] = values
+                        # if empid == "350040":
+                        #     print("FIRST:",keys,values)
+                    elif dateTimeConv(inoutDict[empid][keys[0]]["shiftout"]) < dateTimeConv(values):
+                        inoutDict[empid][keys[0]]["shiftout"] = values
+                        # if empid == "350040":
+                        #     print("UPDATE:",keys,values)
+
+    timeDict = nested_dict.nested_dict()
+    for empid in inoutDict.keys():
+        shiftCode = employeeShift[empid][len(employeeShift[empid])-1]
+        # predictedShift[empid] = predictShift(empid)
+
+        for date in inoutDict[empid].keys():
+            if shiftCode in ["D", "E"]:
+                if inoutDict[empid][date]["lastout"] != {} or inoutDict[empid][date]["firstin"] != {}:
+                    if not nextDate(date) in list(inoutDict[empid].keys()):
+                        if inoutDict[empid][date]["shiftin"] == {}:
+                            timeDict[empid][date] = "NS"
                         else:
-                            mess[date] = "NS"
+                            timeDict[empid][date] = "SIOM"
+                    else:
+                        if inoutDict[empid][nextDate(date)]["shiftout"] != {} and inoutDict[empid][date]["shiftin"] != {}:
+                            timeDiff = abs(dateTimeConv(inoutDict[empid][nextDate(date)]["shiftout"]) - dateTimeConv(inoutDict[empid][date]["shiftin"]))
+                            timeDict[empid][date] = str(timeDiff)
+                        else:
+                            if inoutDict[empid][nextDate(date)]["shiftout"] == {} and inoutDict[empid][date]["shiftin"] == {}:
+                                timeDict[empid][date] = "NS"
+                            else:
+                                timeDict[empid][date] = "SIOM"
+
                 else:
-                    mess[date] = "NS"
-        sort = {k:mess[k] for k in sorted(list(mess.keys()))}
-        del mess
-        sort = list(sort.values())
-        sort.insert(0,empid)
-        for i in range(3):
-            sort.insert(i,employeeShift[empid][i])
-        # print(sort)
-        masterList.append(sort)
-        finalSheet.append(sort)
-        del sort
-    finalReport.save("finalReport {}.xlsx".format(fileName))
-    return(masterList, d1, d2)
+                    timeDict[empid][date] = "SIOM"
+            elif shiftCode == "C":
+                updated = False
+                if nextDate(date) in list(inoutDict[empid].keys()):
+                    if inoutDict[empid][nextDate(date)]["firstin"] != {} and inoutDict[empid][date]["shiftin"] != {}:
+                        if dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]).hour < 3:
+                            timeDiffNext = dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]) - dateTimeConv(inoutDict[empid][date]["shiftin"])
+                            timeDict[empid][date] = str(timeDiffNext)
+                            updated = True
+                            # print(timeDiffNext,empid)
+                if inoutDict[empid][date]["lastout"] != {} and inoutDict[empid][date]["firstin"] != {}:
+                    if updated:
+                        pass
+                    else:
+                        timeDiff = dateTimeConv(inoutDict[empid][date]["lastout"]) - dateTimeConv(inoutDict[empid][date]["firstin"])
+                        timeDict[empid][date] = str(timeDiff)
+                        if inoutDict[empid][date]["shiftin"] != {} and inoutDict[empid][date]["shiftout"] != {}:
+                            timeDiffShift = dateTimeConv(inoutDict[empid][date]["shiftout"]) - dateTimeConv(inoutDict[empid][date]["shiftin"])
+                            timeDict[empid][date] += " "+str(timeDiffShift)
+                else:
+                    timeDict[empid][date] = "SIOM"
+            else:
+                if inoutDict[empid][date]["lastout"] != {} and inoutDict[empid][date]["firstin"] != {}:
+                    timeDiff = dateTimeConv(inoutDict[empid][date]["lastout"]) - dateTimeConv(inoutDict[empid][date]["firstin"])
+                    timeDict[empid][date] = str(timeDiff)
+                else:
+                    timeDict[empid][date] = "SIOM"
+
+    # with open("ioFinal.json","w") as jsonFile:
+    #     (json.dump(inoutDict,jsonFile,indent=3))
+    # with open("ioTime.json","w") as jsonFile:
+    #     (json.dump(timeDict,jsonFile,indent=3))
+    return(timeDict, d1, d2)
