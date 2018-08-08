@@ -10,25 +10,31 @@
 {% block content %}
 <section class="container-fluid">
   <div class="row">
-      {% if filter %}
-          <div class="col-md-12 center-block">
-              <form action="" method="get" class="form form-inline ">
-                  {% bootstrap_form filter.form layout='inline' show_label=False %}
-                  <br/><br/>
-                  <p align="center">{% bootstrap_button 'Filter' extra_classes='btn-warning'%}
-                  <a href="/home/analys" class="form-inline btn btn-danger btn-md" role="button">Reset</a></p>
-                </div>
-              </form>
-          </div>
-      {% endif %}
+    {% if filter %}
+      <div class="container-fluid col-md-12 center-block">
+          <form action="" method="get" class="form form-inline ">
+              {% bootstrap_form filter.form layout='inline' show_label=False %}
+              <br/><br/>
+              <p align="center">
+                {% bootstrap_button 'Filter' extra_classes='btn-warning'%}
+                <a href="/home/analys" class="form-inline btn btn-danger btn-md" role="button">Reset</a>
+              </p>
+          </form>
+          <form class="" action="/home/mail" role="form" method="post" enctype="multipart/form-data">
+            <!-- <div style="" class="col-md-12 col-xs-12 col-sm-12 col-lg-12 "> -->
+                {% render_table table %}
+                <p align="center">
+                  <input class="btn btn-primary" type="submit" name="submit-email" value="Email">
+                </p>
+            <!-- </div> -->
+          </form>
+      </div>
+    {% endif %}
+  </div>
+
     </div>
     <div class="row">
-      <form action="/home/mail" role="form" method="post" enctype="multipart/form-data">
-        <div style="padding-top: 50px" class="col-md-12 col-xs-12 col-sm-12 col-lg-12 ">
-            {% render_table table %}
-            <input class="btn btn-primary center-block" type="submit" name="submit-email" value="Email">
-        </div>
-      </form>
+
     </div>
   </div>
   <script>
@@ -36,38 +42,59 @@
     $('[class ^="attendence_date"]').append("<a id = 'tooltip-inside'></a>");
     $('[id ^="tooltip-inside"]').attr("data-toggle","tooltip");
     $('[id ^="tooltip-inside"]').attr("data-placement","right");
+    $('#master_table').DataTable({
+      scrollY: 450,
+      "iDisplayLength": 25
+      // paging: false
+    });
     // $('[id ^="tooltip-inside"]').tooltip();
     // $('[data-toggle="tooltip"]').
   });
-  $('[class ^="attendence_date"]').mouseenter(function(){
-    var valueOfTd = $(this).text();
-    var d = new Date(valueOfTd);
-    var weekday = new Array(7);
-    weekday[0] =  "Sunday";
-    weekday[1] = "Monday";
-    weekday[2] = "Tuesday";
-    weekday[3] = "Wednesday";
-    weekday[4] = "Thursday";
-    weekday[5] = "Friday";
-    weekday[6] = "Saturday";
-    var n = weekday[d.getDay()];
-    // $(this).attr("data-toggle","tooltip");
-    $(this).find('#tooltip-inside').attr("title",n);
-    $(this).find('#tooltip-inside').tooltip("show");
-    $(this).mouseleave(function(){
-      $(this).find('#tooltip-inside').tooltip("hide");
-    })
-  });
-
-  $('[id ^="modalBtn"]').click(function(){
-  // alert(this.value);
-  // console.log("hasdas");
+  function load(elem){
+    var prevDate = elem.value.split('&')[0]+'&'+moment(elem.value.split('&')[1]).add(-1, 'days').format('YYYY-MM-DD');
+    var nextDate = elem.value.split('&')[0]+'&'+moment(elem.value.split('&')[1]).add(1, 'days').format('YYYY-MM-DD');
+    $.ajax({
+      type: 'GET',
+      url: '/home/ifDatePresent/'+prevDate,
+      success: function(data){
+        if (data.response == false){
+          $('.previou').addClass('disabled');
+          $('.previou').attr('disabled','true');
+          $('.previou').removeAttr('id');
+          $('.previou').removeAttr('value');
+        }
+        else {
+          $('.previou').removeClass('disabled');
+          $('.previou').removeAttr('disabled');
+          $('.previou').attr('id','newBtn'+prevDate);
+          $('.previou').attr('value',prevDate);
+        }
+      }
+    });
+    $.ajax({
+      type: 'GET',
+      url: '/home/ifDatePresent/'+nextDate,
+      success: function(data){
+        if (data.response == false){
+          $('.nexti').addClass('disabled');
+          $('.nexti').attr('disabled','true');
+          $('.nexti').removeAttr('id');
+          $('.nexti').removeAttr('value');
+        }
+        else {
+          $('.nexti').removeClass('disabled');
+          $('.nexti').removeAttr('disabled');
+          $('.nexti').attr('id','newBtn'+nextDate);
+          $('.nexti').attr('value',nextDate);
+        }
+      }
+    });
   var service = '/home/getEmpDetails/';
       jQuery.support.cors = true;
       $.ajax(
       {
           type: "GET",
-          url: service+this.value,
+          url: service+elem.value,
           data: "{}",
           contentType: "application/json; charset=utf-8",
           dataType: "json",
@@ -89,7 +116,13 @@
               console.log(msg.responseText);
           }
       });
-  })
+  };
+  $('[id ^="modalBtn"]').click(function(){
+    load(this);
+  });
+  $(document).on('click', 'button.nexti, button.previou', function(){
+    load(this);
+  });
 
   </script>
   <style>
@@ -132,7 +165,11 @@
             </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <div align="left" class="btn-group pull-left">
+            <button type="button" class="btn btn-primary previou">Previous</button>
+            <button type="button" class="btn btn-primary nexti">Next</button>
+          </div>
+          <button align="right" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

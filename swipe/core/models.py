@@ -10,22 +10,28 @@ class Document(models.Model):
     file_to = models.DateField(default=datetime(1990,1,1),blank=True)
     processed = models.BooleanField(default=False)
     records = models.CharField(max_length=255, blank=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.file_title
 
     def get_absolute_url(self):
         return '/{}'.format(self.upload_url)
 
 class Employee(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, default=None)
     employee_id = models.CharField(max_length=255, blank=True)
     attendence_date = models.DateField(default=None,blank=True)
+    day = models.CharField(max_length=255, blank=True)
+    code = models.CharField(max_length=1, blank=True)
     work_time = models.CharField(max_length=255, blank=True)
     employee_name = models.CharField(max_length=255, blank=True)
     dept = models.CharField(max_length=255, blank=True)
     tower = models.CharField(max_length=255, blank=True)
-    emp_response = models.CharField(max_length=255, blank=False, default="No Recorded response")
+    emp_response = models.CharField(max_length=255, blank=False, default="No Response")
+    def __str__(self):
+        return '{}_{}_{}'.format(self.employee_id,self.employee_name, self.attendence_date)
 
 class EmployeeComplete(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, default=None)
     dat = models.DateField(blank=True)
     tim = models.TimeField(blank = True)
     sitecode = models.IntegerField(blank=True)
@@ -38,3 +44,6 @@ class EmployeeComplete(models.Model):
     gate = models.CharField(max_length=255, blank=True)
     inout = models.CharField(max_length=255, blank=True)
     remark = models.CharField(max_length=255, blank=True)
+    def __str__(self):
+        return '{}_{}_{}'.format(self.empid,self.empname, self.dat)
+    

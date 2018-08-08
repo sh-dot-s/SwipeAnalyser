@@ -1,0 +1,9 @@
+django
+nltk
+pytz
+django-tables2
+django-filter
+openpyxl
+nested_dict
+django-bootstrap3
+tablib

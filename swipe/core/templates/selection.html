@@ -10,12 +10,17 @@
 
 {% block content %}
 <section class="container-fluid">
-  {% render_table table %}
-  <div class="row">
-    <div class="col-md-8 col-md-offset-2">
-      <a href="/home/analys" class="btn btn-primary btn-md" role="button">Enable Filter</a>
+  {% if table %}
+    <h2>Mail has been sent for the following data:<br/></h2>
+    {% render_table table %}
+    <div class="row">
+      <div class="col-md-12">
+        <a href="/home/analys" class="btn btn-block btn-default btn-md" role="button">Return</a>
+      </div>
     </div>
-  </div>
+  {% else %}
+    <h2>No content to display<br/></h2>
+  {% endif %}
 </section>
 
 {% endblock %}

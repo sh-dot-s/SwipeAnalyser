@@ -7,6 +7,10 @@
       $(document).ready(function(){
         $('[data-toggle="dtooltip"]').tooltip();
         $('[data-toggle="detooltip"]').tooltip();
+        $('a#pop').on('click', function(e){
+          e.preventDefault();
+          return true;
+        });
         $('[data-toggle^="popover"]').popover({
           container: 'body',
           html: true
@@ -22,12 +26,12 @@
             <h2 class="list-group-item-heading">Process Stats</h2>
           </div>
           {% for files in documents %}
-            <a href="#" 
+            <a href="#"
+              id="pop"
               class="list-group-item"
               style="text-decoration: none"
               data-trigger="focus"
               data-placement = 'top'
-              href="#"
               data-toggle="popover{{files.file_title}}" 
               title="Details" 
               data-content="
@@ -71,7 +75,9 @@
   				</button>
   				<ul class="dropdown-menu">
             {% for items in documents %}
-  					<li><a role="button" class="btn" id="graph_{{items.file_title}}">{{items.file_title}}</a></li>
+              {% if items.processed %}
+                <li><a role="button" class="btn" id="graph_{{items.file_title}}">{{items.file_title}}</a></li>
+              {% endif %}
             {% endfor %}
   				</ul>
   			</div>

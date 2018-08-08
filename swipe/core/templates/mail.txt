@@ -4,9 +4,15 @@
 <td>{name}</td>
 <td>{date}</td>
 <td>{time}</td>
-<td><label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Fullday">Present Fullday</label>
-<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Halfday">Present Halfday</label>
-<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Leave">Leave</label>
-<label class="radio-inline"><input type="radio" name="remarks{i}_{id}_{date}" value = "Work from Home">Work from Home</label>
+<td><label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Fullday">Present Fullday</label>
+<label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Present Halfday">Present Halfday</label>
+<label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Leave">Leave</label>
+<label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Work from Home">Work from Home</label>
+<label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Comp Off">
+    Comp Off
+    <input type="text" id='remarks{i}_{id}_{date}' hidden="true" name="compRemarks{i}_{id}_{date}" placeholder="Enter CompWork Date"/> 
+</label>
+<label id='compWork' class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "On Duty">On Duty</label>
+<label class="radio"><input type="radio" name="remarks{i}_{id}_{date}" value = "Week Off">Week Off</label>
 </td>
 </tr>

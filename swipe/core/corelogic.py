@@ -180,8 +180,9 @@ def load_master_emp(datafile):
         reprocess = True
 
     if reprocess:
-        with open("masterEmployee{}_{}.json".format(d1,d2),"w") as jsonFile:
-            (json.dump(dumpableDict,jsonFile,indent=3))
+        # with open("masterEmployee{}_{}.json".format(d1,d2),"w") as jsonFile:
+        #     (json.dump(dumpableDict,jsonFile,indent=3))
+        pass
     else:
         print("No file Change detected, loading data from json")
         with open("masterEmployee{}_{}.json".format(d1,d2),"r") as jsonFile:
@@ -191,7 +192,10 @@ def load_master_emp(datafile):
 
 def shift_emp_masters():
     masterDir = os.path.join(settings.STATICFILES_DIRS[0],"masters")
-    masterFile = os.path.join(masterDir,os.listdir(masterDir)[0])
+    for fileNames in os.listdir(masterDir):
+        if not fileNames.startswith("archive"):
+            masterFile = os.path.join(masterDir,fileNames)
+            break
     master = openpyxl.load_workbook(masterFile,read_only = True)
     activeShiftSheet = master.get_sheet_by_name("Shift Master")
     activeEmployeeSheet = master.get_sheet_by_name("Employee Master")
@@ -261,7 +265,6 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
             elif dateTimeConv(inoutDict[keys[0]][keys[1]]["lastin"]) < dateTimeConv(values):
                 inoutDict[keys[0]][keys[1]]["lastin"] = values
 
-
         if keys[4] == "out":
             if inoutDict[keys[0]][keys[1]]["firstout"] == {}:
                 inoutDict[keys[0]][keys[1]]["firstout"] = values
@@ -274,13 +277,27 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
 
     for empid in masterEmployee.keys():
         shiftCode = employeeShift[empid][len(employeeShift[empid])-1]
-        if shiftCode in ['C','D','E']:
+        if shiftCode == "R":
+            for code in ['C','D','E','F']:
+                actualshiftin = [(datetime.datetime.strptime(shiftDict[code][list(shiftDict[code].keys())[i]][0], "%H:%M:%S")-gracetimein).time() for i in range(len(list(shiftDict[code].keys())))]
+                actualshiftout = [(datetime.datetime.strptime(shiftDict[code][list(shiftDict[code].keys())[i]][1], "%H:%M:%S")).time() for i in range(len(list(shiftDict[code].keys())))]
+                actualshiftoutgrace = [(datetime.datetime.strptime(shiftDict[code][list(shiftDict[code].keys())[i]][1], "%H:%M:%S")+gracetimeout).time() for i in range(len(list(shiftDict[code].keys())))]
+                for keys,values in masterEmployee[empid].items_flat():
+                    if any(dateTimeConv(values).time() > ain for ain in actualshiftin):
+                        if inoutDict[empid][keys[0]]["shiftin%s"%code] == {}:
+                            inoutDict[empid][keys[0]]["shiftin%s"%code] = values
+                        elif dateTimeConv(inoutDict[empid][keys[0]]["shiftin%s"%code]) > dateTimeConv(values):
+                            inoutDict[empid][keys[0]]["shiftin%s"%code] = values
+                    if any(dateTimeConv(values).time() < aout for aout in actualshiftout) or any(dateTimeConv(values).time() < aout for aout in actualshiftoutgrace):
+                        if inoutDict[empid][keys[0]]["shiftout%s"%code] == {}:
+                            inoutDict[empid][keys[0]]["shiftout%s"%code] = values
+                        elif dateTimeConv(inoutDict[empid][keys[0]]["shiftout%s"%code]) < dateTimeConv(values):
+                            inoutDict[empid][keys[0]]["shiftout%s"%code] = values
+        if shiftCode in ['C','D','E','F']:
             actualshiftin = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][0], "%H:%M:%S")-gracetimein).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
             actualshiftout = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][1], "%H:%M:%S")).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
             actualshiftoutgrace = [(datetime.datetime.strptime(shiftDict[shiftCode][list(shiftDict[shiftCode].keys())[i]][1], "%H:%M:%S")+gracetimeout).time() for i in range(len(list(shiftDict[shiftCode].keys())))]
             for keys,values in masterEmployee[empid].items_flat():
-                # if empid == "350040":
-                #     print("INFO:",keys,values)
                 if any(dateTimeConv(values).time() > ain for ain in actualshiftin):
                     if inoutDict[empid][keys[0]]["shiftin"] == {}:
                         inoutDict[empid][keys[0]]["shiftin"] = values
@@ -289,20 +306,63 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
                 if any(dateTimeConv(values).time() < aout for aout in actualshiftout) or any(dateTimeConv(values).time() < aout for aout in actualshiftoutgrace):
                     if inoutDict[empid][keys[0]]["shiftout"] == {}:
                         inoutDict[empid][keys[0]]["shiftout"] = values
-                        # if empid == "350040":
-                        #     print("FIRST:",keys,values)
                     elif dateTimeConv(inoutDict[empid][keys[0]]["shiftout"]) < dateTimeConv(values):
                         inoutDict[empid][keys[0]]["shiftout"] = values
-                        # if empid == "350040":
-                        #     print("UPDATE:",keys,values)
 
     timeDict = nested_dict.nested_dict()
+    def rotationalCal(empid, date, shiftCode):
+        array = []
+        if shiftCode in ["D", "E", "F"]:
+            if inoutDict[empid][date]["lastout"] != {} or inoutDict[empid][date]["firstin"] != {}:
+                if not nextDate(date) in list(inoutDict[empid].keys()):
+                    if inoutDict[empid][date]["shiftin%s"%shiftCode] == {}:
+                        array.append("NS")
+                    else:
+                        array.append("SIOM")
+                else:
+                    if inoutDict[empid][nextDate(date)]["shiftout%s"%shiftCode] != {} and inoutDict[empid][date]["shiftin%s"%shiftCode] != {}:
+                        timeDiff = abs(dateTimeConv(inoutDict[empid][nextDate(date)]["shiftout%s"%shiftCode]) - dateTimeConv(inoutDict[empid][date]["shiftin%s"%shiftCode]))
+                        array.append(str(timeDiff))
+                    else:
+                        if inoutDict[empid][nextDate(date)]["shiftout%s"%shiftCode] == {} and inoutDict[empid][date]["shiftin%s"%shiftCode] == {}:
+                            array.append("NS")
+                        else:
+                            array.append("SIOM")
+
+            else:
+                array.append("SIOM")
+        elif shiftCode == "C":
+            updated = False
+            if nextDate(date) in list(inoutDict[empid].keys()):
+                if inoutDict[empid][nextDate(date)]["firstin"] != {} and inoutDict[empid][date]["shiftin"] != {}:
+                    if dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]).hour < 3:
+                        timeDiffNext = dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]) - dateTimeConv(inoutDict[empid][date]["shiftin%s"%shiftCode])
+                        array.append(str(timeDiffNext))
+                        updated = True
+                        # print(timeDiffNext,empid)
+            if inoutDict[empid][date]["lastout"] != {} and inoutDict[empid][date]["firstin"] != {}:
+                if updated:
+                    pass
+                else:
+                    timeDiff = dateTimeConv(inoutDict[empid][date]["lastout"]) - dateTimeConv(inoutDict[empid][date]["firstin"])
+                    array.append(str(timeDiff))
+                    if inoutDict[empid][date]["shiftin%s"%shiftCode] != {} and inoutDict[empid][date]["shiftout%s"%shiftCode] != {}:
+                        timeDiffShift = dateTimeConv(inoutDict[empid][date]["shiftout%s"%shiftCode]) - dateTimeConv(inoutDict[empid][date]["shiftin%s"%shiftCode])
+                        if str(timeDiffShift) not in array:
+                            array.append(str(timeDiffShift))
+            else:
+                array.append("SIOM")
+        else:
+            if inoutDict[empid][date]["lastout"] != {} and inoutDict[empid][date]["firstin"] != {}:
+                timeDiff = dateTimeConv(inoutDict[empid][date]["lastout"]) - dateTimeConv(inoutDict[empid][date]["firstin"])
+                array.append(str(timeDiff))
+            else:
+                array.append("SIOM")
+        return array
     for empid in inoutDict.keys():
         shiftCode = employeeShift[empid][len(employeeShift[empid])-1]
-        # predictedShift[empid] = predictShift(empid)
-
         for date in inoutDict[empid].keys():
-            if shiftCode in ["D", "E"]:
+            if shiftCode in ["D", "E", "F"]:
                 if inoutDict[empid][date]["lastout"] != {} or inoutDict[empid][date]["firstin"] != {}:
                     if not nextDate(date) in list(inoutDict[empid].keys()):
                         if inoutDict[empid][date]["shiftin"] == {}:
@@ -321,12 +381,23 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
 
                 else:
                     timeDict[empid][date] = "SIOM"
+            elif shiftCode == 'R':
+                a = []
+                for codes in ['G','C','D','E','F']:
+                    a.append(rotationalCal(empid, date, codes))
+                b = "(A|B|G) {} (C) {} (D) {} (E|F) {}".format(a[0],a[1],a[2],a[3])
+                timeDict[empid][date] = b
             elif shiftCode == "C":
                 updated = False
                 if nextDate(date) in list(inoutDict[empid].keys()):
                     if inoutDict[empid][nextDate(date)]["firstin"] != {} and inoutDict[empid][date]["shiftin"] != {}:
                         if dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]).hour < 3:
                             timeDiffNext = dateTimeConv(inoutDict[empid][nextDate(date)]["firstin"]) - dateTimeConv(inoutDict[empid][date]["shiftin"])
+                            timeDict[empid][date] = str(timeDiffNext)
+                            updated = True
+                    if inoutDict[empid][nextDate(date)]["firstout"] != {} and inoutDict[empid][date]["shiftin"] != {}:
+                        if dateTimeConv(inoutDict[empid][nextDate(date)]["firstout"]).hour < 3:
+                            timeDiffNext = dateTimeConv(inoutDict[empid][nextDate(date)]["firstout"]) - dateTimeConv(inoutDict[empid][date]["shiftin"])
                             timeDict[empid][date] = str(timeDiffNext)
                             updated = True
                             # print(timeDiffNext,empid)
@@ -338,7 +409,8 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
                         timeDict[empid][date] = str(timeDiff)
                         if inoutDict[empid][date]["shiftin"] != {} and inoutDict[empid][date]["shiftout"] != {}:
                             timeDiffShift = dateTimeConv(inoutDict[empid][date]["shiftout"]) - dateTimeConv(inoutDict[empid][date]["shiftin"])
-                            timeDict[empid][date] += " "+str(timeDiffShift)
+                            if str(timeDiffShift) not in timeDict[empid][date]:
+                                timeDict[empid][date] += " "+str(timeDiffShift)
                 else:
                     timeDict[empid][date] = "SIOM"
             else:
@@ -352,4 +424,5 @@ def calc_time(masterEmployee,employeeShift,irregularShifts,shiftDict,fileName):
     #     (json.dump(inoutDict,jsonFile,indent=3))
     # with open("ioTime.json","w") as jsonFile:
     #     (json.dump(timeDict,jsonFile,indent=3))
+    
     return(timeDict, d1, d2)

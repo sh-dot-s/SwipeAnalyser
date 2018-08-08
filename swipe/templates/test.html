@@ -456,26 +456,36 @@ footer .nav>li>a:hover {
           {
             type: 'post',
             url: '/home/test',
+            beforeSend: function() {
+              $('#section2').html('<h3>Validating...<h3>');
+            },
             success: function(result) {
-              $('#section2').html('Analysis queued...');
-              (function worker() {
-                $.get('/home/test', function(data) {
-                  console.log(data);
-                  // Now that we've completed the request schedule the next one.
-                  if(data.status == 'started' || data.status == 'running'){
-                    console.log(data);
-                    setTimeout(worker, 25000);
-                  }
-                  else{
-                    $('#section2').html('Analysis complete...');
-                    return;
-                  }
+              $('#section2').html('<h3>You will recieve a mail once the process is complete :><h3>');
+              if(result.status == 'stopped'){
+                var rHmtl = '<h3>Processing stopped, the following data is missing in master, correct and restart processing</h3><ul class="alert alert-danger">';
+                result.missing.forEach(element => {
+                  rHmtl += '<li>'+element+'</li>'
                 });
-              })();
+                rHmtl += '</ul>'
+                $('#section2').html(rHmtl);
+              }
+              // else{
+              //   (function worker() {
+              //     $.get('/home/test', function(data) {
+              //       if(data.status == 'started' || data.status == 'running'){
+              //         setTimeout(worker, 1000);
+              //       }
+              //       else{
+              //         $('#section2').html('<h3>Analysis complete...<h3>');
+              //         return;
+              //       }
+              //     });
+              //   })();
+              // }
             },
             error: function(error) {
               console.log(error);
-              $('#section2').html('Failed ... :<');
+              $('#section2').html('<h3>You will recieve a mail once the process is complete :><h3>');
             }
           }
         );
@@ -488,6 +498,20 @@ footer .nav>li>a:hover {
 {% block content %}
 <div id="load"></div>
 <section class="container-fluid section2" id="section2">
-  <div class="well text-center" type="hidden"><button  id="upload" type="button" class="btn btn-primary btn-lg ">Start Analysis</button><h1 class="ml12 text-center" id="did_you_know"></h1></div>
+  <ul>
+    {% if nodocs %}
+      <h4>No Unprocessed documents, please upload documents to process</h4>
+    {% else %}
+    <h4>Unprocessed documents:</h4>
+    <div style="padding-left:50px">
+      {% for doc in nogo %}
+        <li>{{doc.file_title}}</li>
+      {% endfor %}
+    </div>
+    <br/>
+    <div type="hidden"><button  id="upload" type="button" class="btn btn-primary btn-lg ">Start Analysis</button><h1 class="ml12 text-center" id="did_you_know"></h1></div>
+    {% endif %}
+  </ul>
+
 </section>
 {% endblock %}

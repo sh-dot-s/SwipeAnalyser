@@ -1,0 +1,173 @@
+{% extends 'nav-base.html' %} {% load render_table from django_tables2 %} {% block content %}
+<section class="container-fluid">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- <div class="panel-group" id="panel-0"> -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading" data-toggle="collapse" data-parent="#panel-02" href="#panel-element-1">
+                            <div class="panel-title">Manage Users&nbsp;
+                                <span class="label label-primary">
+                                    {% if count %} {{count}} {% else %} 0 {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div id="panel-element-1" class="container-fluid" class="panel-collapse collapse">
+                            <div class="panel-body table-responsive">
+                                {% render_table users %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading" data-toggle="collapse" data-parent="#panel-1" href="#panel-element-2">
+                            <div class="panel-title">Create Users&nbsp;
+                                <span class="label label-success">+</span>
+                            </div>
+                        </div>
+                        <div id="panel-element-2" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                <form method="POST">
+                                    {% csrf_token %} {{ form.as_p }}
+                                    <button type="submit" class="btn btn-default">Create</button>
+                                </form>
+                                <br/> {% if form.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                <!-- </div> -->
+            </div>
+        </div>
+    </div>
+    <div id="userform" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 id="replacable-header" class="modal-title"></h4>
+                </div>
+                <form id="validationForm" method="POST">
+                    <div id="replacable-body" class="modal-body">
+
+                    </div>
+                    <div class="modal-footer">
+                        <p align="right">
+                            <button id='submitbtn' type="submit" class="btn btn-primary">Submit</button>
+                            <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="deleteconfirm" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content modal-xl">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Confirm Delete</h4>
+                </div>
+                <div id='replaceble-body' class="modal-body">
+                    <h3>Are you sure you want to delete this user?
+                        <br/>
+                        <small>Once deleted, the account can never be recovered!</small>
+                    </h3>
+                </div>
+                <div class="modal-footer">
+                    <p align="center">
+                        <button id='confirm' align="center" type="button" class="btn btn-danger" data-dismiss="modal">Confirm</button>
+                        <button align="center" type="button" class="btn btn-success" data-dismiss="modal">Cancel</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        @media (min-width: 508px) {
+            .modal-xl {
+                width: 95%;
+                max-width: 1300px;
+            }
+        }
+    </style>
+    <script>
+        $('[id ^="formbtn"]').click(function () {
+            if (this.id == 'formbtn-userchange' || this.id == 'formbtn-changepwd') {
+                d = { id: this.id, key: this.value }
+                if (this.id == 'formbtn-userchange') {
+                    $("#replacable-header").html('Change User Details');
+                    $("#submitbtn").attr('value', this.id);
+                }
+                else if (this.id == 'formbtn-changepwd') {
+                    $("#replacable-header").html('Change Password');
+                    $("#submitbtn").attr('value', this.id);                    
+                }
+
+                $.ajax({
+                    type: "GET",
+                    url: '/home/create',
+                    data: d,
+                    success: function (data) {
+                        $("#replacable-body").html(data);
+                        // location.reload();
+                    },
+                    error: function (msg) {
+                        console.log(msg.responseText);
+                    }
+                });
+            }
+            else if (this.id == 'formbtn-delete') {
+                console.log(this.value);
+                document.getElementById('confirm').value = this.value;
+            }
+        });
+        $(document).ready(function () {
+            // $(document).on('click', 'button.nexti, button.previou', function () {
+            //     // load(this);
+            // });
+            $('#confirm').on('click', function () {
+                d = { id: this.id, key: this.value };
+                $.ajax({
+                    type: "GET",
+                    url: '/home/create',
+                    data: d,
+                    success: function (data) {
+                        $("#replacable-body").html('<h3>The user has been deleted succesfully... Reloading...... </h3>');
+                        location.reload();
+                    },
+                    error: function (msg) {
+                        console.log(msg.responseText);
+                    }
+                });
+            });
+        });
+        $('#validationForm').submit(function (e) {
+            e.preventDefault();
+            var value = document.querySelector('#submitbtn').value;
+            $.ajaxSetup({
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+            });
+            $.ajax({
+                type: "POST",
+                url: '/home/validate',
+                data: $('#validationForm').serializeArray() + '&key=' + value,
+                success: function (data) {
+                    $("#replacable-body").html(data);
+                    // setTimeout(function () {
+                    //     //do what you need here
+                    // }, 2000);
+                    // location.reload();
+                },
+                error: function (msg) {
+                    console.log(msg.responseText);
+                }
+            });
+        });
+    </script>
+</section>
+{% endblock %}
